@@ -49,4 +49,3 @@ class UAVEnv(gym.Env):
         min_distances = np.min(distances, axis=1)
         reward = -np.sum(min_distances)
         return reward
-
