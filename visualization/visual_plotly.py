@@ -1,6 +1,6 @@
 import numpy as np
 import plotly.graph_objects as go
-from uav_env import UAVEnv
+from core.uav_env import UAVEnv
 
 # Initialize environment
 env = UAVEnv(num_users=20, num_uavs=3)

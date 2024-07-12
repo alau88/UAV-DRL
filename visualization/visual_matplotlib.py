@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from uav_env import UAVEnv
+from core.uav_env import UAVEnv
 import numpy as np
 
 # Initialize environment

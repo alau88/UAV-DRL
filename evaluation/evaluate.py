@@ -1,6 +1,5 @@
-import torch
 import numpy as np
-from uav_env import UAVEnv
+
 
 def evaluate_policy(env, policy_net, num_episodes=1):
     total_rewards = []
