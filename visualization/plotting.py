@@ -18,7 +18,8 @@ def plot_training_evaluation_rewards(train_reward, eval_reward, eval_interval, c
     plt.ylabel("Reward")
 
     plt.plot(smoothed_train_reward, label="Training Rewards per Episode")
-    eval_episodes = list(range(0, len(train_reward), eval_interval))
+
+    eval_episodes = list(range(eval_interval, eval_interval * (len(eval_reward) + 1), eval_interval))
     plt.plot(eval_episodes, eval_reward, 'ro-', label="Evaluation Rewards")
 
     param_text = "\n".join([f"{key}: {value}" for key, value in params.items()])

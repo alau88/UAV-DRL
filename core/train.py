@@ -62,8 +62,8 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
         total_reward_per_episode.append(total_reward)
         print(f'Episode {episode}, Total Reward: {total_reward}')
 
-        if episode % config.evaluation_interval == 0:
-            eval_reward, _, _ = evaluate_policy(env, policy_net)
+        if episode > 0 and episode % config.evaluation_interval == 0:
+            eval_reward, _, _ = evaluate_policy(env, policy_net, device=device)
             evaluation_rewards_per_interval.append(eval_reward)
             print(f'Evaluation Reward at Episode {episode}: {eval_reward}')
 
