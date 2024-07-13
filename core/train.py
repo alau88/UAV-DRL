@@ -21,7 +21,7 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
 
         while not done:
             action = select_action(state, policy_net, epsilon, env.action_space)
-            next_state, reward, done, _ = env.step(action.detach().numpy())
+            next_state, reward, done, _ = env.step(action.detach().cpu().numpy())
             next_state = torch.tensor(next_state.flatten(), dtype=torch.float32).unsqueeze(0).to(device)
             total_reward += reward
 
