@@ -15,15 +15,14 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
     epsilon = config.epsilon_start
     # try:
     for episode in range(start_episode, config.num_episodes):
-        state = env.reset()
-        state = torch.FloatTensor(state.flatten()).unsqueeze(0).to(device)
+        state = env.reset().flatten().unsqueeze(0).to(device)
         total_reward = 0
         done = False
 
         while not done:
             action = select_action(state, policy_net, epsilon, env.action_space)
-            next_state, reward, done, _ = env.step(action.numpy())
-            next_state = torch.FloatTensor(next_state.flatten()).unsqueeze(0).to(device)
+            next_state, reward, done, _ = env.step(action.detach().numpy())
+            next_state = torch.tensor(next_state.flatten(), dtype=torch.float32).unsqueeze(0).to(device)
             total_reward += reward
 
             replay_buffer.add(state, action, reward, next_state, done)
@@ -71,7 +70,7 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
 if __name__ == "__main__":
     config = Config()
     # Initialize networks and optimizer
-    env = UAVEnv(num_users=10, num_uavs=3, area_size=(100, 100))
+    env = UAVEnv(num_users=20, num_uavs=3, area_size=(100, 100))
     state_size = env.observation_space.shape[0] * env.observation_space.shape[1]
     action_size = env.action_space.shape[0] * env.action_space.shape[1]
 

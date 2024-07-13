@@ -10,7 +10,8 @@ def select_action(state, policy_net, epsilon, action_space):
         with torch.no_grad():
             return policy_net(state).argmax(dim=1).view(-1, 1)
     else:
-        return torch.tensor([[random.choice(range(action_space.shape[0]))]], dtype=torch.long)
+        return torch.tensor([[random.choice(range(action_space.shape[0]))]], dtype=torch.long,
+                            device=state.device)
 
 
 def train_batch(policy_net, target_net, optimizer, batch, gamma):

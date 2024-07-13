@@ -1,8 +1,9 @@
 import os
 import torch
 
-CHECK_POINT_DIRECTORY = 'checkpoints_history'
-BEST_MODEL_DIRECTORY = 'best_model'
+BASE_OUTPUT_DIRECTORY = os.path.join(os.path.dirname(__file__), '..', 'output')
+CHECK_POINT_DIRECTORY = os.path.join(BASE_OUTPUT_DIRECTORY, 'checkpoints_history')
+BEST_MODEL_DIRECTORY = os.path.join(BASE_OUTPUT_DIRECTORY, 'best_model')
 
 
 def save_checkpoint(state, file_name='checkpoint.pth.tar'):

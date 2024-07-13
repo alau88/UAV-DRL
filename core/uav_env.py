@@ -1,10 +1,10 @@
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
-
+import torch
 
 class UAVEnv(gym.Env):
-    def __init__(self, num_users=10, num_uavs=3, area_size=(100, 100)):
+    def __init__(self, num_users=10, num_uavs=3, area_size=(100, 100), max_steps=1000):
         super(UAVEnv, self).__init__()
 
         self.uav_positions = None
@@ -12,7 +12,8 @@ class UAVEnv(gym.Env):
         self.num_users = num_users
         self.num_uavs = num_uavs
         self.area_size = area_size
-
+        self.max_steps = max_steps
+        self.step_count = 0
         # Define action and observation space
         # Actions: Move UAVs in x and y directions
         self.action_space = spaces.Box(low=-1, high=1, shape=(num_uavs, 2), dtype=np.float32)
@@ -34,9 +35,11 @@ class UAVEnv(gym.Env):
 
     def _get_obs(self):
         # Concatenate user and UAV positions for the observation
-        return np.vstack((self.user_positions, self.uav_positions))
+        return torch.tensor(np.vstack((self.user_positions, self.uav_positions)), dtype=torch.float32)
 
     def step(self, action):
+        if isinstance(action, torch.Tensor):
+            action = action.detach().cpu().numpy()
         movement_range = 1
         scaled_action = action * movement_range
 
@@ -47,8 +50,10 @@ class UAVEnv(gym.Env):
         self.uav_positions = np.clip(self.uav_positions, 0, self.area_size)
 
         reward = self._compute_reward()
+        self.step_count += 1
 
-        return self._get_obs(), reward, False, {}
+        done = self.step_count >= self.max_steps
+        return self._get_obs(), reward, done, {}
 
     def _compute_reward(self):
         # Compute the reward based on the distance between users and their nearest UAV
