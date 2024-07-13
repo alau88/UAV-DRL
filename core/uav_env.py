@@ -62,5 +62,8 @@ class UAVEnv(gym.Env):
         # Compute the reward based on the distance between users and their nearest UAV
         distances = np.linalg.norm(self.user_positions[:, np.newaxis] - self.uav_positions, axis=2)
         min_distances = np.min(distances, axis=1)
-        reward = -np.sum(min_distances)
-        return reward
+
+        max_possible_distance = np.sqrt((self.area_size[0] ** 2) + (self.area_size[1] ** 2))
+        normalized_reward = -np.sum(min_distances) / (max_possible_distance * self.num_users)
+
+        return normalized_reward
