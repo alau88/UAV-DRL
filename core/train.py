@@ -34,7 +34,6 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
                 train_batch(policy_net, target_net, optimizer, batch, config.gamma)
 
             epsilon = max(config.epsilon_end, config.epsilon_decay * epsilon)
-            print(f"{done} + {replay_buffer}")
 
         if episode % config.target_update == 0:
             target_net.load_state_dict(policy_net.state_dict())
