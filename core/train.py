@@ -1,6 +1,13 @@
 import torch
 from core.utils import select_action, train_batch
 from checkpoints.check_point import save_checkpoint, save_best_model
+# for main training
+from configs.config import Config
+from core.dqn import DQN
+from core.replay_buffer import ReplayBuffer
+from core.uav_env import UAVEnv
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
@@ -9,14 +16,14 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
     # try:
     for episode in range(start_episode, config.num_episodes):
         state = env.reset()
-        state = torch.FloatTensor(state.flatten()).unsqueeze(0)
+        state = torch.FloatTensor(state.flatten()).unsqueeze(0).to(device)
         total_reward = 0
         done = False
 
         while not done:
             action = select_action(state, policy_net, epsilon, env.action_space)
             next_state, reward, done, _ = env.step(action.numpy())
-            next_state = torch.FloatTensor(next_state.flatten()).unsqueeze(0)
+            next_state = torch.FloatTensor(next_state.flatten()).unsqueeze(0).to(device)
             total_reward += reward
 
             replay_buffer.add(state, action, reward, next_state, done)
@@ -27,6 +34,7 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
                 train_batch(policy_net, target_net, optimizer, batch, config.gamma)
 
             epsilon = max(config.epsilon_end, config.epsilon_decay * epsilon)
+            print(f"{done} + {replay_buffer}")
 
         if episode % config.target_update == 0:
             target_net.load_state_dict(policy_net.state_dict())
@@ -58,3 +66,20 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
 
     # except Exception as e:
     #     print(f"Error during training: {e}")
+
+
+# TODO: removed after test finished
+if __name__ == "__main__":
+    config = Config()
+    # Initialize networks and optimizer
+    env = UAVEnv(num_users=10, num_uavs=3, area_size=(100, 100))
+    state_size = env.observation_space.shape[0] * env.observation_space.shape[1]
+    action_size = env.action_space.shape[0] * env.action_space.shape[1]
+
+    policy_net = DQN(state_size, action_size).to(device)
+    target_net = DQN(state_size, action_size).to(device)
+    target_net.load_state_dict(policy_net.state_dict())
+    optimizer = torch.optim.Adam(policy_net.parameters())
+    replay_buffer = ReplayBuffer(config.replay_buffer_capacity)
+
+    train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config)
