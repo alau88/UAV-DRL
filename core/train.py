@@ -26,7 +26,7 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
                                         optimizer, epsilon, best_total_reward)
 
         if total_reward > best_total_reward:
-            best_total_reward = save_best_model_if_improved(episode, policy_net, target_net,
+            best_total_reward, best_model = save_best_model_if_improved(episode, policy_net, target_net,
                                                             optimizer, epsilon, total_reward)
 
         print(f'Episode {episode}, Total Reward: {total_reward}')
@@ -89,4 +89,4 @@ def save_best_model_if_improved(episode, policy_net, target_net, optimizer, epsi
     }
     save_best_model(best_model)
 
-    return best_total_reward
+    return best_total_reward, best_model
