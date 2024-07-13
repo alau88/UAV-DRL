@@ -1,6 +1,7 @@
 import torch
 from core.utils import select_action, train_batch
 from checkpoints.check_point import save_checkpoint, save_best_model
+from evaluation.evaluate import evaluate_policy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -9,6 +10,7 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
               start_episode=0, best_total_reward=-float('inf')):
     epsilon = config.epsilon_start
     total_reward_per_episode = []
+    evaluation_rewards_per_interval = []
     best_model = None
 
     for episode in range(start_episode, config.num_episodes):
@@ -60,4 +62,9 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
         total_reward_per_episode.append(total_reward)
         print(f'Episode {episode}, Total Reward: {total_reward}')
 
-    return total_reward_per_episode, best_model
+        if episode % config.evaluation_interval == 0:
+            eval_reward, _, _ = evaluate_policy(env, policy_net)
+            evaluation_rewards_per_interval.append(eval_reward)
+            print(f'Evaluation Reward at Episode {episode}: {eval_reward}')
+
+    return total_reward_per_episode, evaluation_rewards_per_interval, best_model
