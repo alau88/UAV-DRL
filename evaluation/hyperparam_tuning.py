@@ -30,32 +30,36 @@ def evaluate_config(config):
     total_reward_per_episode, eval_reward_per_interval, best_model = train_dqn(env, policy_net,
                                                                                target_net, optimizer,
                                                                                replay_buffer, config)
-    plot_training_evaluation_rewards(total_reward_per_episode, eval_reward_per_interval,
-                                     config.evaluation_interval, config)
 
     mean_reward = np.mean(total_reward_per_episode[-100:])
 
-    return mean_reward, best_model
+    return mean_reward, best_model, total_reward_per_episode, eval_reward_per_interval
 
 
 def run_grid_search():
     best_config = None
     best_reward = -float('inf')
     best_model_overall = None
+    best_total_reward_per_episode = None
+    best_eval_reward_per_interval = None
 
     for params in param_combinations:
         config = Config(**dict(zip(param_names, params)))
-        mean_reward, best_model = evaluate_config(config)
+        mean_reward, best_model, total_reward_per_episode, eval_reward_per_interval = evaluate_config(config)
 
         if mean_reward > best_reward:
             best_reward = mean_reward
             best_config = config
             best_model_overall = best_model
+            best_total_reward_per_episode = total_reward_per_episode
+            best_eval_reward_per_interval = eval_reward_per_interval
 
         print(f"Config: {params}, Mean Reward: {mean_reward}")
 
     if best_model_overall:
         save_best_model(best_model_overall, file_name="best_model_overall.pth.tar")
+        plot_training_evaluation_rewards(best_total_reward_per_episode, best_eval_reward_per_interval,
+                                         best_config.evaluation_interval, best_config)
 
     print(f"Best Config: {vars(best_config)}, Best Mean Reward: {best_reward}")
 
