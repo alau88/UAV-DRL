@@ -32,6 +32,8 @@ class UAVEnv(gym.Env):
         # Initialize UAV positions
         self.uav_positions = np.random.rand(self.num_uavs, 2) * self.area_size
 
+        self.step_count = 0
+
         return self._get_obs()
 
     def _get_obs(self):

@@ -28,5 +28,5 @@ def plot_training_evaluation_rewards(train_reward, eval_reward, eval_interval, c
 
     plt.legend()
     plt.grid()
-    # plt.savefig(f"training_evaluation_rewards.png")
+    plt.savefig(f"training_evaluation_rewards.png")
     plt.show()

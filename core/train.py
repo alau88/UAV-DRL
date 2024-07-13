@@ -44,9 +44,10 @@ def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, e
     done = False
 
     while not done:
-        action = select_action(state, policy_net, epsilon, env.action_space)
+        action = select_action(state, policy_net, epsilon, env.action_space, device)
         next_state, reward, done, _ = env.step(action.detach().cpu().numpy())
-        next_state = torch.tensor(next_state.flatten(), dtype=torch.float32).unsqueeze(0).to(device)
+        next_state = next_state.flatten().clone().detach().to(torch.float32).unsqueeze(0).to(device)
+
         total_reward += reward
 
         replay_buffer.add(state, action, reward, next_state, done)
@@ -54,7 +55,7 @@ def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, e
 
         if len(replay_buffer) > config.batch_size:
             batch = replay_buffer.sample(config.batch_size)
-            train_batch(policy_net, target_net, optimizer, batch, config.gamma)
+            train_batch(policy_net, target_net, optimizer, batch, config.gamma, device)
 
         epsilon = max(config.epsilon_end, config.epsilon_decay * epsilon)
 

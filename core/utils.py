@@ -2,19 +2,18 @@ import random
 import torch
 import torch.nn as nn
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-def select_action(state, policy_net, epsilon, action_space):
+def select_action(state, policy_net, epsilon, action_space, device='cpu'):
     if random.random() > epsilon:
         with torch.no_grad():
+            state = state.to(device)
             return policy_net(state).argmax(dim=1).view(-1, 1)
     else:
         return torch.tensor([[random.choice(range(action_space.shape[0]))]], dtype=torch.long,
                             device=state.device)
 
 
-def train_batch(policy_net, target_net, optimizer, batch, gamma):
+def train_batch(policy_net, target_net, optimizer, batch, gamma, device='cpu'):
     states, actions, rewards, next_states, dones = zip(*batch)
     states = torch.cat(states).to(device)
     actions = torch.cat(actions).to(device)
