@@ -18,10 +18,10 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
                                             replay_buffer, config, epsilon)
         total_reward_per_episode.append(total_reward)
 
-        if episode % config.target_update == 0:
+        if episode > 0 and episode % config.target_update == 0:
             update_target_net(policy_net, target_net)
 
-        if episode % config.checkpoint_interval == 0:
+        if episode > 0 and episode % config.checkpoint_interval == 0:
             save_checkpoint_at_interval(episode, policy_net, target_net,
                                         optimizer, epsilon, best_total_reward)
 
