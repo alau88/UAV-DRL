@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from checkpoints.check_point import save_plot
 
 
 def moving_average(values, window):
@@ -8,7 +9,7 @@ def moving_average(values, window):
     return sma
 
 
-def plot_training_evaluation_rewards(train_reward, eval_reward, eval_interval, config):
+def plot_training_evaluation_rewards(train_reward, eval_reward, eval_interval, config, best_overall=False):
     params = config.to_dict()
     smoothed_train_reward = moving_average(train_reward, window=50)
 
@@ -28,5 +29,5 @@ def plot_training_evaluation_rewards(train_reward, eval_reward, eval_interval, c
 
     plt.legend()
     plt.grid()
-    plt.savefig(f"training_evaluation_rewards.png")
+    save_plot(plt, best_overall=best_overall)
     plt.show()

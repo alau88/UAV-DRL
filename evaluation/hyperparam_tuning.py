@@ -7,7 +7,7 @@ from core.uav_env import UAVEnv
 from core.train import train_dqn
 from configs.config import Config
 from configs.hyperparams_grid import param_grid
-from checkpoints.check_point import save_best_model
+from checkpoints.check_point import save_best_model, set_current_output_directory
 from visualization.plotting import plot_training_evaluation_rewards
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -31,6 +31,9 @@ def evaluate_config(config):
                                                                                target_net, optimizer,
                                                                                replay_buffer, config)
 
+    plot_training_evaluation_rewards(total_reward_per_episode, eval_reward_per_interval,
+                                     config.evaluation_interval, config)
+
     mean_reward = np.mean(total_reward_per_episode[-100:])
 
     return mean_reward, best_model, total_reward_per_episode, eval_reward_per_interval
@@ -44,6 +47,7 @@ def run_grid_search():
     best_eval_reward_per_interval = None
 
     for params in param_combinations:
+        set_current_output_directory(params)
         config = Config(**dict(zip(param_names, params)))
         mean_reward, best_model, total_reward_per_episode, eval_reward_per_interval = evaluate_config(config)
 
@@ -57,9 +61,9 @@ def run_grid_search():
         print(f"Config: {params}, Mean Reward: {mean_reward}")
 
     if best_model_overall:
-        save_best_model(best_model_overall, file_name="best_model_overall.pth.tar")
+        save_best_model(best_model_overall, file_name="best_model_overall.pth.tar", best_overall=True)
         plot_training_evaluation_rewards(best_total_reward_per_episode, best_eval_reward_per_interval,
-                                         best_config.evaluation_interval, best_config)
+                                         best_config.evaluation_interval, best_config, best_overall=True)
 
     print(f"Best Config: {vars(best_config)}, Best Mean Reward: {best_reward}")
 
