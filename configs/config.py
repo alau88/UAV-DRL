@@ -1,6 +1,6 @@
 class Config:
     def __init__(self,
-                 num_episodes=500,
+                 num_episodes=350,
                  batch_size=64,
                  gamma=0.99,
                  epsilon_start=1.0,
