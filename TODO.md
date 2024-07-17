@@ -18,11 +18,11 @@ These files are used to satisfy *Task 2.2.3: Visualize the coverage and movement
 
 ## Checklist
 ### In Progress
-- [ ] `dqn.py`
-    - [ ] Save outputs
-    - [ ] Add replay memory (stabilize/improve DQN)
-    - [ ] Make work?
-    - [ ] Improve performance (currently creating tensor using list numpy arrays)
+- [x] `dqn.py`
+    - [x] Save outputs
+    - [x] Add replay memory (stabilize/improve DQN)
+    - [x] Make work?
+    - [x] Improve performance (currently creating tensor using list numpy arrays)
 
 ### Done
 - [x] environment setup
@@ -30,6 +30,6 @@ These files are used to satisfy *Task 2.2.3: Visualize the coverage and movement
 
 ### House-Keeping (unimportant save for last)
 - [ ] add conditionals to setup to handle different versions of pytorch (CPU, GPU (+cu118), OS)
-- [ ] clean up files
+- [x] clean up files
 - [ ] make visualization prettier
 - [ ] add 3D
