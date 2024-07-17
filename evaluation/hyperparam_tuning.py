@@ -40,6 +40,7 @@ def evaluate_config(config):
 
 
 def run_grid_search():
+    count = 0
     best_config = None
     best_reward = -float('inf')
     best_model_overall = None
@@ -59,6 +60,14 @@ def run_grid_search():
             best_eval_reward_per_interval = eval_reward_per_interval
 
         print(f"Config: {params}, Mean Reward: {mean_reward}")
+
+        if count % 10 == 0:
+            save_best_model(best_model_overall, file_name="best_model_overall.pth.tar", best_overall=True)
+            plot_training_evaluation_rewards(best_total_reward_per_episode, best_eval_reward_per_interval,
+                                         best_config.evaluation_interval, best_config, best_overall=True)
+            print(f"Count:{count}, Best Config: {vars(best_config)}, Best Mean Reward: {best_reward}")
+
+        count = count + 1
 
     if best_model_overall:
         save_best_model(best_model_overall, file_name="best_model_overall.pth.tar", best_overall=True)
