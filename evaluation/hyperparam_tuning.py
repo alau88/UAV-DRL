@@ -8,10 +8,10 @@ from core.train import train_dqn
 from configs.config import Config
 from configs.hyperparams_grid import param_grid
 from checkpoints.check_point import save_best_model, set_current_output_directory
-from visualization.plotting import plot_training_evaluation_rewards
+from visualization.plotting import plot_training_evaluation_rewards, plot_training_losses
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+print(device)
 param_combinations = list(itertools.product(*param_grid.values()))
 param_names = list(param_grid.keys())
 
@@ -27,9 +27,10 @@ def evaluate_config(config):
     optimizer = torch.optim.Adam(policy_net.parameters(), lr=config.learning_rate)
     replay_buffer = ReplayBuffer(config.replay_buffer_capacity)
 
-    total_reward_per_episode, eval_reward_per_interval, best_model = train_dqn(env, policy_net,
+    total_reward_per_episode, eval_reward_per_interval, best_model, avg_losses_per_episode = train_dqn(env, policy_net,
                                                                                target_net, optimizer,
                                                                                replay_buffer, config)
+    plot_training_losses(avg_losses_per_episode)
 
     plot_training_evaluation_rewards(total_reward_per_episode, eval_reward_per_interval,
                                      config.evaluation_interval, config)
@@ -78,4 +79,5 @@ def run_grid_search():
 
 
 if __name__ == "__main__":
-    run_grid_search()
+    #run_grid_search()
+    evaluate_config(Config)

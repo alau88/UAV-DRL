@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from core.utils import select_action, train_batch
 from checkpoints.check_point import save_checkpoint, save_best_model
 from evaluation.evaluate import evaluate_policy
@@ -12,11 +13,13 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
     total_reward_per_episode = []
     evaluation_rewards_per_interval = []
     best_model = None
+    episode_losses = []
 
     for episode in range(start_episode, config.num_episodes):
-        total_reward, epsilon = run_episode(env, policy_net, target_net, optimizer,
+        total_reward, epsilon, losses = run_episode(env, policy_net, target_net, optimizer,
                                             replay_buffer, config, epsilon)
         total_reward_per_episode.append(total_reward)
+        episode_losses.append(np.mean(losses))
 
         if episode > 0 and episode % config.target_update == 0:
             update_target_net(policy_net, target_net)
@@ -35,13 +38,14 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
             eval_reward, _, _ = evaluate_policy(env, policy_net, num_episodes=10, device=device)
             evaluation_rewards_per_interval.append(eval_reward)
 
-    return total_reward_per_episode, evaluation_rewards_per_interval, best_model
+    return total_reward_per_episode, evaluation_rewards_per_interval, best_model, episode_losses
 
 
 def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, epsilon):
     state = env.reset().flatten().unsqueeze(0).to(device)
     total_reward = 0
     done = False
+    episode_losses = []
 
     while not done:
         action = select_action(state, policy_net, epsilon, env.action_space, device)
@@ -55,11 +59,12 @@ def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, e
 
         if len(replay_buffer) > config.batch_size:
             batch = replay_buffer.sample(config.batch_size)
-            train_batch(policy_net, target_net, optimizer, batch, config.gamma, device)
+            loss = train_batch(policy_net, target_net, optimizer, batch, config.gamma, device)
+            episode_losses.append(loss) 
 
         epsilon = max(config.epsilon_end, config.epsilon_decay * epsilon)
 
-    return total_reward, epsilon
+    return total_reward, epsilon, episode_losses
 
 
 def update_target_net(policy_net, target_net):

@@ -29,3 +29,5 @@ def train_batch(policy_net, target_net, optimizer, batch, gamma, device='cpu'):
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
+
+    return loss.item()
