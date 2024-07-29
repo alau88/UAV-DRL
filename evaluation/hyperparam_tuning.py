@@ -1,7 +1,7 @@
 import itertools
 import numpy as np
 import torch
-from core.dqn import DQN
+from core.dqn import DQN, DuelingDQN
 from core.replay_buffer import ReplayBuffer
 from core.uav_env import UAVEnv
 from core.train import train_dqn
@@ -16,13 +16,18 @@ param_combinations = list(itertools.product(*param_grid.values()))
 param_names = list(param_grid.keys())
 
 
-def evaluate_config(config):
+def evaluate_config(config,network):
     env = UAVEnv(num_users=20, num_uavs=3, area_size=(100, 100))
     state_size = env.observation_space.shape[0] * env.observation_space.shape[1]
     action_size = env.action_space.shape[0] * env.action_space.shape[1]
-
-    policy_net = DQN(state_size, action_size).to(device)
-    target_net = DQN(state_size, action_size).to(device)
+    if network == "DQN":
+        policy_net = DQN(state_size, action_size).to(device)
+        target_net = DQN(state_size, action_size).to(device)
+    elif network == "DuelingDQN":
+        policy_net = DuelingDQN(state_size, action_size).to(device)
+        target_net = DuelingDQN(state_size, action_size).to(device)
+    else:
+        raise Exception("Please choose valid DQN class from ./core/dqn.py")
     target_net.load_state_dict(policy_net.state_dict())
     optimizer = torch.optim.Adam(policy_net.parameters(), lr=config.learning_rate)
     replay_buffer = ReplayBuffer(config.replay_buffer_capacity)

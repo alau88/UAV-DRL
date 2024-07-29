@@ -25,3 +25,31 @@ class DQN(nn.Module):
             x = self.dropout(x)
         x = self.fc3(x)
         return x
+
+class DuelingDQN(nn.Module):
+    def __init__(self, state_dim, action_dim):
+        super(DuelingDQN, self).__init__()
+        self.fc1 = nn.Linear(state_dim, 256)
+        self.bn1 = nn.BatchNorm1d(256)
+        self.fc_value = nn.Linear(256, 256)
+        self.fc_advantage = nn.Linear(256, 256)
+        
+        self.value = nn.Linear(256, 1)
+        self.advantage = nn.Linear(256, action_dim)
+        self.dropout = nn.Dropout(p=0.2)
+
+    def forward(self, x):
+        if x.size(0) > 1:
+            x = F.relu(self.bn1(self.fc1(x)))
+        else:
+            x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        
+        value = F.relu(self.fc_value(x))
+        advantage = F.relu(self.fc_advantage(x))
+        
+        value = self.value(value)
+        advantage = self.advantage(advantage)
+        
+        q_vals = value + (advantage - advantage.mean(dim=1, keepdim=True))
+        return q_vals
