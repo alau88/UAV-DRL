@@ -19,9 +19,9 @@ def evaluate_policy(env, policy_net, num_episodes=1, device='cpu'):
 
         while not done:
             with torch.no_grad():
-                action = policy_net(state).cpu().numpy().flatten()
+                action = policy_net(state).argmax(dim=1).cpu().numpy().flatten()
 
-            next_state, reward, done, _ = env.step(action.reshape(env.num_uavs, 2))
+            next_state, reward, done, _ = env.step(action)
             next_state = next_state.flatten().clone().detach().unsqueeze(0).to(device)
             next_state_np = next_state.cpu().numpy().flatten()
             user_positions = next_state_np[:env.num_users * 2].reshape(env.num_users, 2)

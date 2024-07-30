@@ -47,15 +47,15 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
 
 
 def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, epsilon):
-    state = env.reset().flatten().unsqueeze(0).to(device)
+    state = env.reset().to(device)
     total_reward = 0
     done = False
     episode_losses = []
 
     while not done:
         action = select_action(state, policy_net, epsilon, env.action_space, device)
-        next_state, reward, done, _ = env.step(action.detach().cpu().numpy())
-        next_state = next_state.flatten().clone().detach().to(torch.float32).unsqueeze(0).to(device)
+        next_state, reward, done, _ = env.step(action)
+        next_state = next_state.to(device)
 
         total_reward += reward
 

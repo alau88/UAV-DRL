@@ -18,7 +18,7 @@ class UAVEnv(gym.Env):
         self.step_count = 0
         # Define action and observation space
         # Actions: Move UAVs in x and y directions
-        self.action_space = spaces.Box(low=-1, high=1, shape=(num_uavs, 2), dtype=np.float32)
+        self.action_space = spaces.Discrete(4)
 
         # Observations: Positions of users and UAVs
         self.observation_space = spaces.Box(low=0, high=max(area_size), shape=(num_users + num_uavs, 2),
@@ -48,15 +48,22 @@ class UAVEnv(gym.Env):
 
         logging.info(f"Step {self.step_count + 1}: Received action: {action}")
 
-        movement_range = min(self.area_size) / 50
-        scaled_action = action * movement_range
-        logging.info(f"Step {self.step_count + 1}: Scaled action: {scaled_action}")
+        step_size = 1
+        action_set = [
+            (0, step_size),    # Up
+            (0, -step_size),   # Down
+            (step_size, 0),    # Right
+            (-step_size, 0)    # Left
+        ]
+        for i in range(self.num_uavs):
+            scaled_action = action_set[action[0]]
+            logging.info(f"Step {self.step_count + 1}: Scaled action: {scaled_action}")
 
         # Move UAVs based on the action
-        self.uav_positions += scaled_action
+            self.uav_positions += scaled_action
 
         # Clip UAV positions to stay within the area
-        self.uav_positions = np.clip(self.uav_positions, 0, self.area_size)
+        self.uav_positions = np.clip(self.uav_positions, [0, 0], self.area_size)
         self.uav_positions_history.append(self.uav_positions.copy())
 
         reward = self._compute_reward()
