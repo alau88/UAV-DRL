@@ -32,6 +32,7 @@ def plot_training_evaluation_rewards(train_reward, eval_reward, eval_interval, c
     save_plot(plt, best_overall=best_overall)
     plt.show()
 
+
 def plot_training_losses(losses):
     plt.figure(figsize=(10, 5))
     plt.plot(losses)

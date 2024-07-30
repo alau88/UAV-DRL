@@ -9,6 +9,7 @@ def select_action(state, policy_net, epsilon, action_space, device='cpu'):
         with torch.no_grad():
             state = state.to(device)
             action = policy_net(state).view(action_space.shape)
+            action = torch.clamp(action, -1, 1)
             logging.info(f'Epsilon: {epsilon}, action selected by policy exploitation: {action}')
             return action
     else:

@@ -48,7 +48,7 @@ class UAVEnv(gym.Env):
 
         logging.info(f"Step {self.step_count + 1}: Received action: {action}")
 
-        movement_range = 1
+        movement_range = min(self.area_size) / 50
         scaled_action = action * movement_range
         logging.info(f"Step {self.step_count + 1}: Scaled action: {scaled_action}")
 
@@ -62,7 +62,6 @@ class UAVEnv(gym.Env):
         reward = self._compute_reward()
         self.step_count += 1
 
-        logging.info(f"Step {self.step_count}: USER positions: {self.user_positions}")
         logging.info(f"Step {self.step_count}: UAV positions: {self.uav_positions}")
         logging.info(f"Step {self.step_count}: Reward: {reward}")
 
@@ -77,4 +76,12 @@ class UAVEnv(gym.Env):
         max_possible_distance = np.sqrt((self.area_size[0] ** 2) + (self.area_size[1] ** 2))
         normalized_reward = -np.sum(min_distances) / (max_possible_distance * self.num_users)
 
-        return normalized_reward
+        distances_to_edges_x = np.minimum(self.uav_positions[:, 0], self.area_size[0] - self.uav_positions[:, 0])
+        distances_to_edges_y = np.minimum(self.uav_positions[:, 1], self.area_size[1] - self.uav_positions[:, 1])
+        distances_to_edges = np.minimum(distances_to_edges_x, distances_to_edges_y)
+
+        edge_penalty = np.sum(np.exp(-distances_to_edges))
+
+        total_reward = normalized_reward - edge_penalty * 0.1
+
+        return total_reward
