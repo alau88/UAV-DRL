@@ -16,7 +16,7 @@ param_combinations = list(itertools.product(*param_grid.values()))
 param_names = list(param_grid.keys())
 
 
-def evaluate_config(config,network):
+def evaluate_config(config, network):
     env = UAVEnv(num_users=20, num_uavs=3, area_size=(100, 100))
     state_size = env.observation_space.shape[0] * env.observation_space.shape[1]
     action_size = env.action_space.shape[0] * env.action_space.shape[1]
@@ -56,7 +56,7 @@ def run_grid_search():
     for params in param_combinations:
         set_current_output_directory(params)
         config = Config(**dict(zip(param_names, params)))
-        mean_reward, best_model, total_reward_per_episode, eval_reward_per_interval = evaluate_config(config)
+        mean_reward, best_model, total_reward_per_episode, eval_reward_per_interval = evaluate_config(config, "DQN")
 
         if mean_reward > best_reward:
             best_reward = mean_reward

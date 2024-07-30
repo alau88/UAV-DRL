@@ -2,6 +2,7 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import torch
+import logging
 
 
 class UAVEnv(gym.Env):
@@ -31,6 +32,7 @@ class UAVEnv(gym.Env):
 
         # Initialize UAV positions
         self.uav_positions = np.random.rand(self.num_uavs, 2) * self.area_size
+        self.uav_positions_history = [self.uav_positions.copy()]
 
         self.step_count = 0
 
@@ -43,17 +45,26 @@ class UAVEnv(gym.Env):
     def step(self, action):
         if isinstance(action, torch.Tensor):
             action = action.detach().cpu().numpy()
+
+        logging.info(f"Step {self.step_count + 1}: Received action: {action}")
+
         movement_range = 1
         scaled_action = action * movement_range
+        logging.info(f"Step {self.step_count + 1}: Scaled action: {scaled_action}")
 
         # Move UAVs based on the action
         self.uav_positions += scaled_action
 
         # Clip UAV positions to stay within the area
         self.uav_positions = np.clip(self.uav_positions, 0, self.area_size)
+        self.uav_positions_history.append(self.uav_positions.copy())
 
         reward = self._compute_reward()
         self.step_count += 1
+
+        logging.info(f"Step {self.step_count}: USER positions: {self.user_positions}")
+        logging.info(f"Step {self.step_count}: UAV positions: {self.uav_positions}")
+        logging.info(f"Step {self.step_count}: Reward: {reward}")
 
         done = self.step_count >= self.max_steps
         return self._get_obs(), reward, done, {}

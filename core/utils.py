@@ -1,16 +1,20 @@
 import random
 import torch
 import torch.nn as nn
+import logging
 
 
 def select_action(state, policy_net, epsilon, action_space, device='cpu'):
     if random.random() > epsilon:
         with torch.no_grad():
             state = state.to(device)
-            return policy_net(state).argmax(dim=1).view(-1, 1)
+            action = policy_net(state).view(action_space.shape)
+            logging.info(f'Epsilon: {epsilon}, action selected by policy exploitation: {action}')
+            return action
     else:
-        return torch.tensor([[random.choice(range(action_space.shape[0]))]], dtype=torch.long,
-                            device=state.device)
+        action = torch.tensor(action_space.sample(), dtype=torch.float32, device=device)
+        logging.info(f'Epsilon: {epsilon}, action selected by random exploration: {action}')
+        return action
 
 
 def train_batch(policy_net, target_net, optimizer, batch, gamma, device='cpu'):
@@ -21,11 +25,12 @@ def train_batch(policy_net, target_net, optimizer, batch, gamma, device='cpu'):
     next_states = torch.cat(next_states).to(device)
     dones = torch.tensor(dones, dtype=torch.float32).to(device)
 
-    current_q_values = policy_net(states).gather(1, actions)
-    max_next_q_values = target_net(next_states).max(1)[0]
+    current_q_values = policy_net(states)
+
+    max_next_q_values = target_net(next_states).max(1)[0].detach()
     target_q_values = rewards + (gamma * max_next_q_values * (1 - dones))
 
-    loss = nn.MSELoss()(current_q_values, target_q_values)
+    loss = nn.MSELoss()(current_q_values, target_q_values.unsqueeze(1))
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()

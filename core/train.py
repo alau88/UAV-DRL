@@ -3,6 +3,10 @@ import numpy as np
 from core.utils import select_action, train_batch
 from checkpoints.check_point import save_checkpoint, save_best_model
 from evaluation.evaluate import evaluate_policy
+import logging
+
+logging.basicConfig(filename='training_debug.log', level=logging.INFO)
+logger = logging.getLogger()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -33,6 +37,7 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
                                                             optimizer, epsilon, total_reward)
 
         print(f'Episode {episode}, Total Reward: {total_reward}')
+        logging.info(f'Episode {episode}, Total Reward: {total_reward}, Epsilon: {epsilon}')
 
         if episode > 0 and episode % config.evaluation_interval == 0:
             eval_reward, _, _ = evaluate_policy(env, policy_net, num_episodes=10, device=device)
