@@ -4,9 +4,9 @@ import torch
 BASE_OUTPUT_DIRECTORY = os.path.join(os.path.dirname(__file__), '..', 'output')
 BEST_OVERALL_MODEL_DIRECTORY = os.path.join(BASE_OUTPUT_DIRECTORY, 'best_overall_model')
 
-current_output_directory = None
-check_point_directory = None
-best_model_directory = None
+current_output_directory = "./UAV-DRL/output"
+check_point_directory = "./UAV-DRL/output/check_point"
+best_model_directory = "./UAV-DRL/output/best_model"
 
 
 def set_current_output_directory(config):

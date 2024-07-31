@@ -14,12 +14,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 param_combinations = list(itertools.product(*param_grid.values()))
 param_names = list(param_grid.keys())
+    
 
-
-def evaluate_config(config,network):
-    env = UAVEnv(num_users=20, num_uavs=3, area_size=(100, 100))
+def evaluate_config(config,network,env):
     state_size = env.observation_space.shape[0] * env.observation_space.shape[1]
-    action_size = env.action_space.shape[0] * env.action_space.shape[1]
+    action_size = env.action_space.n
     if network == "DQN":
         policy_net = DQN(state_size, action_size).to(device)
         target_net = DQN(state_size, action_size).to(device)
