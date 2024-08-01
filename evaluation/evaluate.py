@@ -16,10 +16,15 @@ def evaluate_policy(env, policy_net, num_episodes=1, device='cpu'):
         done = False
         user_positions_history = []
         uav_positions_history = []
-
+        
         while not done:
-            with torch.no_grad():
-                action = policy_net(state).argmax(dim=1).cpu().numpy().flatten()
+            actions = []
+            for uav in range(env.num_uavs):
+                with torch.no_grad():
+                    q_values = policy_net(state)
+                    action_index = q_values[0, uav].argmax(dim=0).item()
+                    actions.append(action_index)
+            action = torch.tensor(actions, dtype=torch.long, device=state.device)
 
             next_state, reward, done, _ = env.step(action)
             next_state = next_state.flatten().clone().detach().unsqueeze(0).to(device)
