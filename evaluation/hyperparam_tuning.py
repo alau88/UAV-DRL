@@ -21,8 +21,8 @@ def evaluate_config(config, network):
     state_size = env.observation_space.shape[0] * env.observation_space.shape[1]
     action_size = env.action_space.n
     if network == "DQN":
-        policy_net = DQN(state_size, action_size).to(device)
-        target_net = DQN(state_size, action_size).to(device)
+        policy_net = DQN(state_size, env.num_uavs, action_size).to(device)
+        target_net = DQN(state_size, env.num_uavs, action_size).to(device)
     elif network == "DuelingDQN":
         policy_net = DuelingDQN(state_size, action_size).to(device)
         target_net = DuelingDQN(state_size, action_size).to(device)

@@ -33,14 +33,15 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
                                         optimizer, epsilon, best_total_reward)
 
         if total_reward > best_total_reward:
+            update_target_net(policy_net, target_net)
             best_total_reward, best_model = save_best_model_if_improved(episode, policy_net, target_net,
-                                                            optimizer, epsilon, total_reward)
+                                                                        optimizer, epsilon, total_reward)
 
         print(f'Episode {episode}, Total Reward: {total_reward}')
         logging.info(f'Episode {episode}, Total Reward: {total_reward}, Epsilon: {epsilon}')
 
         if episode > 0 and episode % config.evaluation_interval == 0:
-            eval_reward, _, _ = evaluate_policy(env, policy_net, num_episodes=10, device=device)
+            eval_reward, _, _ = evaluate_policy(env, target_net, num_episodes=10, device=device)
             evaluation_rewards_per_interval.append(eval_reward)
 
     return total_reward_per_episode, evaluation_rewards_per_interval, best_model, episode_losses
@@ -53,7 +54,7 @@ def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, e
     episode_losses = []
 
     while not done:
-        action = select_action(state, policy_net, epsilon, env.action_space, device)
+        action = select_action(state, policy_net, epsilon, env.action_space, env.num_uavs, device)
         next_state, reward, done, _ = env.step(action)
         next_state = next_state.to(device)
 
