@@ -41,7 +41,7 @@ class DuelingDQN(nn.Module):
         self.fc_value = nn.Linear(256, 256)
         self.fc_advantage = nn.Linear(256, 256)
         
-        self.value = nn.Linear(256, 1)
+        self.value = nn.Linear(256, num_uavs)
         self.advantage = nn.Linear(256, num_uavs * action_dim)
         self.dropout = nn.Dropout(p=0.2)
 
@@ -55,8 +55,9 @@ class DuelingDQN(nn.Module):
         value = F.relu(self.fc_value(x))
         advantage = F.relu(self.fc_advantage(x))
         
-        value = self.value(value)
-        advantage = self.advantage(advantage)
-        
-        q_vals = value + (advantage - advantage.mean(dim=1, keepdim=True))
-        return q_vals.view(-1, self.num_uavs, self.action_dim)
+        value = self.value(value) # (batch_size, num_uavs)
+        advantage = self.advantage(advantage) # (batch_size, num_uavs * action_dim)
+        # Reshape advantage to (batch_size, num_uavs, action_dim)
+        advantage = advantage.view(-1, self.num_uavs, self.action_dim)
+        q_vals = value.unsqueeze(2) + (advantage - advantage.mean(dim=2, keepdim=True))
+        return q_vals
