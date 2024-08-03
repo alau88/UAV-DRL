@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import logging
 
+
 class UAVEnv(gym.Env):
     def __init__(self, num_users=10, num_uavs=3, area_size=(100, 100), max_steps=2000):
         super(UAVEnv, self).__init__()
@@ -86,11 +87,14 @@ class UAVEnv(gym.Env):
             # Clip user positions to stay within the area
             self.user_positions[i] = np.clip(self.user_positions[i], [0, 0], self.area_size)
 
-    def _compute_reward(self):
+    def _compute_reward(self, coverage_threshold=5):
         distances = np.linalg.norm(self.user_positions[:, np.newaxis] - self.uav_positions, axis=2)
         min_distances = np.min(distances, axis=1)
         max_possible_distance = np.sqrt((self.area_size[0] ** 2) + (self.area_size[1] ** 2))
 
         distance_reward = -np.sum(min_distances) / (max_possible_distance * self.num_users)
+        close_reward = np.sum(min_distances < coverage_threshold)
 
-        return distance_reward
+        total_reward = distance_reward + close_reward
+
+        return total_reward
