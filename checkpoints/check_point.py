@@ -1,5 +1,6 @@
 import os
 import torch
+import pandas as pd
 
 BASE_OUTPUT_DIRECTORY = os.path.join(os.path.dirname(__file__), '..', 'output')
 BEST_OVERALL_MODEL_DIRECTORY = os.path.join(BASE_OUTPUT_DIRECTORY, 'best_overall_model')
@@ -21,17 +22,22 @@ def set_current_output_directory(network):
     print(f"Current output directory set to: {current_output_directory}")
 
 
+def return_path(directory, file_name):
+    return os.path.join(directory, file_name)
+
+
 def save_checkpoint(state, file_name='checkpoint.pth.tar'):
     if not os.path.exists(check_point_directory):
         os.makedirs(check_point_directory)
-    file_path = os.path.join(check_point_directory, file_name)
+
+    file_path = return_path(check_point_directory, file_name)
 
     torch.save(state, file_path)
     print(f'Checkpoint saved to {file_path}')
 
 
 def load_checkpoint(file_name='checkpoint.pth.tar'):
-    file_path = os.path.join(check_point_directory, file_name)
+    file_path = return_path(check_point_directory, file_name)
     if os.path.exists(file_path):
         state = torch.load(file_path)
         print(f'Checkpoint loaded from {file_path}')
@@ -51,9 +57,15 @@ def save_best_model(state, file_name='best_model.pth.tar', best_overall=False):
 
     if not os.path.exists(best_model_directory):
         os.makedirs(best_model_directory)
-    file_path = os.path.join(best_model_directory, file_name)
+    file_path = return_path(best_model_directory, file_name)
     torch.save(state, file_path)
     print(f'Best model saved to {file_path}')
+
+
+def save_evaluation_metrics(performance_metrics, file_name='uav_performance_metrics.csv'):
+    df_metrics = pd.DataFrame(performance_metrics)
+    csv_file_path = return_path(current_output_directory, file_name)
+    df_metrics.to_csv(csv_file_path, index=False)
 
 
 def save_plot(plt, file_name, best_overall=False):
@@ -64,5 +76,5 @@ def save_plot(plt, file_name, best_overall=False):
         plt.savefig(plt_file_path)
         return
 
-    plt_file_path = os.path.join(current_output_directory, file_name)
+    plt_file_path = return_path(current_output_directory, file_name)
     plt.savefig(plt_file_path)
