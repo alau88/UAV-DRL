@@ -18,12 +18,15 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
     evaluation_rewards_per_interval = []
     best_model = None
     episode_losses = []
+    uav_positions_history = []
 
     for episode in range(start_episode, config.num_episodes):
-        total_reward, epsilon, losses = run_episode(env, policy_net, target_net, optimizer,
-                                            replay_buffer, config, epsilon, double_dqn)
+        total_reward, epsilon, losses, episode_uav_positions = run_episode(env, policy_net, target_net,
+                                                                           optimizer, replay_buffer, config,
+                                                                           epsilon, double_dqn)
         total_reward_per_episode.append(total_reward)
         episode_losses.append(np.mean(losses))
+        uav_positions_history.append(episode_uav_positions)
 
         if episode > 0 and episode % config.target_update == 0:
             update_target_net(policy_net, target_net)
@@ -44,7 +47,8 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
             eval_reward, _, _ = evaluate_policy(env, target_net, num_episodes=10, device=device)
             evaluation_rewards_per_interval.append(eval_reward)
 
-    return total_reward_per_episode, evaluation_rewards_per_interval, best_model, episode_losses
+    return (total_reward_per_episode, evaluation_rewards_per_interval, best_model, episode_losses,
+            uav_positions_history)
 
 
 def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, epsilon, double_dqn=False):
@@ -53,6 +57,8 @@ def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, e
     done = False
     episode_losses = []
 
+    episode_uav_positions = [env.uav_positions.copy()]
+
     while not done:
         action = select_action(state, policy_net, epsilon, env.action_space, env.num_uavs, device)
         next_state, reward, done, _ = env.step(action)
@@ -60,6 +66,7 @@ def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, e
 
         total_reward += reward
 
+        episode_uav_positions.append(env.uav_positions.copy())
         replay_buffer.add(state, action, reward, next_state, done)
         state = next_state
 
@@ -73,7 +80,7 @@ def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, e
 
         epsilon = max(config.epsilon_end, config.epsilon_decay * epsilon)
 
-    return total_reward, epsilon, episode_losses
+    return total_reward, epsilon, episode_losses, episode_uav_positions
 
 
 def update_target_net(policy_net, target_net):
