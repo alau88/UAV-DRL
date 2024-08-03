@@ -5,7 +5,7 @@ import torch
 import logging
 
 class UAVEnv(gym.Env):
-    def __init__(self, num_users=10, num_uavs=3, area_size=(100, 100), max_steps=500):
+    def __init__(self, num_users=10, num_uavs=3, area_size=(100, 100), max_steps=2000):
         super(UAVEnv, self).__init__()
 
         self.uav_positions = None
@@ -17,7 +17,8 @@ class UAVEnv(gym.Env):
         self.step_count = 0
         
         self.action_space = spaces.Discrete(5)
-        self.observation_space = spaces.Box(low=0, high=max(area_size), shape=(num_users + num_uavs, 2), dtype=np.float32)
+        self.observation_space = spaces.Box(low=0, high=max(area_size), shape=(num_users + num_uavs, 2),
+                                            dtype=np.float32)
 
         self.reset()
 
@@ -27,9 +28,14 @@ class UAVEnv(gym.Env):
 
     def reset(self):
         self.step_count = 0
-        self.user_positions = np.random.rand(self.num_users, 2) * self.area_size if self.user_positions is None else self.user_positions
-        self.uav_positions = np.random.rand(self.num_uavs, 2) * self.area_size if self.uav_positions is None else self.uav_positions
+        self.user_positions = np.random.rand(self.num_users,
+                                             2) * self.area_size if self.user_positions is None else self.user_positions
+        self.uav_positions = np.random.rand(self.num_uavs,
+                                            2) * self.area_size if self.uav_positions is None else self.uav_positions
+
         self.uav_positions = self.uav_positions.astype(np.float64)
+        self.user_positions = self.user_positions.astype(np.float64)
+
         self.uav_positions_history = [self.uav_positions.copy()]
         return self._get_obs()
 
@@ -42,12 +48,30 @@ class UAVEnv(gym.Env):
 
         logging.info(f"Step {self.step_count + 1}: Received action: {action}")
 
-        base_step_size = 0.5
+        def dynamic_step_size(base_step_size, max_distance, distances, nearby_user_density, max_step_size):
+            # Dynamic factor based on the maximum distance to any user
+            distance_factor = 1 + (distances.max() / max_distance)
+
+            # Dynamic factor based on the density of nearby users
+            density_factor = 1 + (nearby_user_density / self.num_users)
+
+            # Calculate the dynamic step size
+            step_size = base_step_size * distance_factor * density_factor
+
+            # Cap the step size to prevent it from being too large
+            step_size = min(step_size, max_step_size)
+
+            return step_size
+
+        base_step_size = 1
         max_distance = np.sqrt((self.area_size[0] ** 2) + (self.area_size[1] ** 2))
 
         for i in range(self.num_uavs):
             distances = np.linalg.norm(self.user_positions - self.uav_positions[i], axis=1)
             step_size = base_step_size + 0.5 * (distances.max() / max_distance)
+            nearby_user_density = np.sum(distances < max_distance / 4)  # Count users within a quarter of max distance
+            step_size = dynamic_step_size(base_step_size, max_distance, distances, nearby_user_density, 5)
+
             action_set = [
                 (0, 0),
                 (0, step_size),  # Up
@@ -91,8 +115,5 @@ class UAVEnv(gym.Env):
         max_possible_distance = np.sqrt((self.area_size[0] ** 2) + (self.area_size[1] ** 2))
 
         distance_reward = -np.sum(min_distances) / (max_possible_distance * self.num_users)
-        close_reward = np.sum(min_distances < 5)
 
-        total_reward = distance_reward + close_reward
-
-        return total_reward
+        return distance_reward

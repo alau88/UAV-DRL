@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from core.utils import select_action, train_batch
+from core.utils import select_action, train_batch, train_double_dqn_batch
 from checkpoints.check_point import save_checkpoint, save_best_model
 from evaluation.evaluate import evaluate_policy
 import logging
@@ -12,7 +12,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
-              start_episode=0, best_total_reward=-float('inf')):
+              start_episode=0, best_total_reward=-float('inf'), double_dqn=False):
     epsilon = config.epsilon_start
     total_reward_per_episode = []
     evaluation_rewards_per_interval = []
@@ -21,7 +21,7 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
 
     for episode in range(start_episode, config.num_episodes):
         total_reward, epsilon, losses = run_episode(env, policy_net, target_net, optimizer,
-                                            replay_buffer, config, epsilon)
+                                            replay_buffer, config, epsilon, double_dqn)
         total_reward_per_episode.append(total_reward)
         episode_losses.append(np.mean(losses))
 
@@ -47,7 +47,7 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
     return total_reward_per_episode, evaluation_rewards_per_interval, best_model, episode_losses
 
 
-def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, epsilon):
+def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, epsilon, double_dqn=False):
     state = env.reset().to(device)
     total_reward = 0
     done = False
@@ -65,7 +65,10 @@ def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, e
 
         if len(replay_buffer) > config.batch_size:
             batch = replay_buffer.sample(config.batch_size)
-            loss = train_batch(policy_net, target_net, optimizer, batch, config.gamma, device)
+            if double_dqn:
+                loss = train_double_dqn_batch(policy_net, target_net, optimizer, batch, config.gamma, device)
+            else:
+                loss = train_batch(policy_net, target_net, optimizer, batch, config.gamma, device)
             episode_losses.append(loss) 
 
         epsilon = max(config.epsilon_end, config.epsilon_decay * epsilon)

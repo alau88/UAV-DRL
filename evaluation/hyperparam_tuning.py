@@ -16,8 +16,8 @@ param_combinations = list(itertools.product(*param_grid.values()))
 param_names = list(param_grid.keys())
 
 
-def evaluate_config(config, network):
-    env = UAVEnv(num_users=10, num_uavs=3, area_size=(100, 100))
+def evaluate_config(config, network, double_dqn=False):
+    env = UAVEnv(num_users=2, num_uavs=1, area_size=(100, 100))
     state_size = env.observation_space.shape[0] * env.observation_space.shape[1]
     action_size = env.action_space.n
     if network == "DQN":
@@ -32,9 +32,10 @@ def evaluate_config(config, network):
     optimizer = torch.optim.Adam(policy_net.parameters(), lr=config.learning_rate)
     replay_buffer = ReplayBuffer(config.replay_buffer_capacity)
 
-    total_reward_per_episode, eval_reward_per_interval, best_model, avg_losses_per_episode = train_dqn(env, policy_net,
-                                                                               target_net, optimizer,
-                                                                               replay_buffer, config)
+    (total_reward_per_episode, eval_reward_per_interval,
+     best_model, avg_losses_per_episode) = train_dqn(env, policy_net, target_net,
+                                                     optimizer, replay_buffer, config, double_dqn=double_dqn)
+
     plot_training_losses(avg_losses_per_episode)
 
     plot_training_evaluation_rewards(total_reward_per_episode, eval_reward_per_interval,
