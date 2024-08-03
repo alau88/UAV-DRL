@@ -66,9 +66,9 @@ def plot_total_reward_and_moving_average(total_reward_per_episode):
     window_size = 50
     moving_avg_rewards = moving_average(total_reward_per_episode, window_size)
 
-    offset = window_size // 2
-    ax1.plot(range(offset, len(moving_avg_rewards) + offset), moving_avg_rewards,
-             color='red', label='Moving Average')
+    padding = (len(total_reward_per_episode) - len(moving_avg_rewards)) // 2
+    moving_avg_rewards_padded = np.pad(moving_avg_rewards, (padding, padding), 'edge')
+    ax1.plot(moving_avg_rewards_padded, color='red', label='Moving Average')
 
     ax1.set_xlabel('Episode')
     ax1.set_ylabel('Total Reward')

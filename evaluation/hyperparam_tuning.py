@@ -31,7 +31,8 @@ def plot_evaluation(avg_losses_per_episode, total_reward_per_episode,
     plot_total_reward_and_moving_average(total_reward_per_episode)
 
 
-def evaluate_config(config, network, double_dqn=False):
+def evaluate_config(config, network):
+    double_dqn = False
     env = UAVEnv(num_users=10, num_uavs=3, area_size=(100, 100))
     state_size = env.observation_space.shape[0] * env.observation_space.shape[1]
     action_size = env.action_space.n
@@ -42,6 +43,10 @@ def evaluate_config(config, network, double_dqn=False):
     elif network == "DuelingDQN":
         policy_net = DuelingDQN(state_size, env.num_uavs, action_size).to(device)
         target_net = DuelingDQN(state_size, env.num_uavs, action_size).to(device)
+    elif network == "DoubleDQN":
+        double_dqn = True
+        policy_net = DQN(state_size, env.num_uavs, action_size).to(device)
+        target_net = DQN(state_size, env.num_uavs, action_size).to(device)
     else:
         raise Exception("Please choose valid DQN class from ./core/dqn.py")
 
@@ -62,7 +67,7 @@ def evaluate_config(config, network, double_dqn=False):
     return mean_reward, best_model, total_reward_per_episode, eval_reward_per_interval
 
 
-def run_grid_search(network, double_dqn=False):
+def run_grid_search(network):
     count = 0
     best_config = None
     best_reward = -float('inf')
@@ -78,31 +83,31 @@ def run_grid_search(network, double_dqn=False):
 
         config = Config(**params_dict)
         (mean_reward, best_model, total_reward_per_episode,
-         eval_reward_per_interval) = evaluate_config(config, network, double_dqn)
+         eval_reward_per_interval) = evaluate_config(config, network)
 
-        if mean_reward > best_reward:
-            best_reward = mean_reward
-            best_config = config
-            best_model_overall = best_model
-            best_total_reward_per_episode = total_reward_per_episode
-            best_eval_reward_per_interval = eval_reward_per_interval
-
-        print(f"Config: {params}, Mean Reward: {mean_reward}")
-
-        if count % 10 == 0:
-            save_best_model(best_model_overall, file_name="best_model_overall.pth.tar", best_overall=True)
-            plot_training_evaluation_rewards(best_total_reward_per_episode, best_eval_reward_per_interval,
-                                             best_config.evaluation_interval, best_config, best_overall=True)
-            print(f"Count:{count}, Best Config: {vars(best_config)}, Best Mean Reward: {best_reward}")
-
-        count = count + 1
-
-    if best_model_overall:
-        save_best_model(best_model_overall, file_name="best_model_overall.pth.tar", best_overall=True)
-        plot_training_evaluation_rewards(best_total_reward_per_episode, best_eval_reward_per_interval,
-                                         best_config.evaluation_interval, best_config, best_overall=True)
-
-    print(f"Best Config: {vars(best_config)}, Best Mean Reward: {best_reward}")
+    #     if mean_reward > best_reward:
+    #         best_reward = mean_reward
+    #         best_config = config
+    #         best_model_overall = best_model
+    #         best_total_reward_per_episode = total_reward_per_episode
+    #         best_eval_reward_per_interval = eval_reward_per_interval
+    #
+    #     print(f"Config: {params}, Mean Reward: {mean_reward}")
+    #
+    #     if count % 10 == 0:
+    #         save_best_model(best_model_overall, file_name="best_model_overall.pth.tar", best_overall=True)
+    #         plot_training_evaluation_rewards(best_total_reward_per_episode, best_eval_reward_per_interval,
+    #                                          best_config.evaluation_interval, best_config, best_overall=True)
+    #         print(f"Count:{count}, Best Config: {vars(best_config)}, Best Mean Reward: {best_reward}")
+    #
+    #     count = count + 1
+    #
+    # if best_model_overall:
+    #     save_best_model(best_model_overall, file_name="best_model_overall.pth.tar", best_overall=True)
+    #     plot_training_evaluation_rewards(best_total_reward_per_episode, best_eval_reward_per_interval,
+    #                                      best_config.evaluation_interval, best_config, best_overall=True)
+    #
+    # print(f"Best Config: {vars(best_config)}, Best Mean Reward: {best_reward}")
 
 
 if __name__ == "__main__":
