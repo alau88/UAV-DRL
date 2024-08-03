@@ -68,7 +68,6 @@ class UAVEnv(gym.Env):
 
         for i in range(self.num_uavs):
             distances = np.linalg.norm(self.user_positions - self.uav_positions[i], axis=1)
-            step_size = base_step_size + 0.5 * (distances.max() / max_distance)
             nearby_user_density = np.sum(distances < max_distance / 4)  # Count users within a quarter of max distance
             step_size = dynamic_step_size(base_step_size, max_distance, distances, nearby_user_density, 5)
 
