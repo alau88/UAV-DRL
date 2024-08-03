@@ -111,4 +111,6 @@ def run_grid_search(network):
 
 
 if __name__ == "__main__":
+    run_grid_search("DQN")
     run_grid_search("DuelingDQN")
+    run_grid_search("DoubleDQN")

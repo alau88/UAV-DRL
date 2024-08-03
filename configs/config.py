@@ -1,7 +1,7 @@
 class Config:
     def __init__(self,
                  network,
-                 num_episodes=500,
+                 num_episodes=250,
                  batch_size=64,
                  gamma=0.99,
                  epsilon_start=1.0,
@@ -11,7 +11,7 @@ class Config:
                  checkpoint_interval=50,
                  replay_buffer_capacity=10000,
                  learning_rate=0.001,
-                 evaluation_interval=5):
+                 evaluation_interval=50):
         self.network = network
         self.num_episodes = num_episodes
         self.batch_size = batch_size
