@@ -22,21 +22,21 @@ class UAVEnv(gym.Env):
 
         self.reset()
 
-    def set_positions(self, user_positions, uav_positions):
-        self.user_positions = np.array(user_positions)
-        self.uav_positions = np.array(uav_positions)
-
     def reset(self):
         self.step_count = 0
-        self.user_positions = np.random.rand(self.num_users,
-                                             2) * self.area_size if self.user_positions is None else self.user_positions
-        self.uav_positions = np.random.rand(self.num_uavs,
-                                            2) * self.area_size if self.uav_positions is None else self.uav_positions
+        self.user_positions = np.random.rand(self.num_users, 2) * self.area_size
+        self.uav_positions = np.array([
+                                          [15, 15],  # Bottom-left corner
+                                          [15, self.area_size[1]-15],  # Top-left corner
+                                          [self.area_size[0]-15, 15],  # Bottom-right corner
+                                          [self.area_size[0]-15, self.area_size[1]-15]  # Top-right corner
+                                      ][:self.num_uavs])
 
         self.uav_positions = self.uav_positions.astype(np.float64)
         self.user_positions = self.user_positions.astype(np.float64)
 
         self.uav_positions_history = [self.uav_positions.copy()]
+
         return self._get_obs()
 
     def _get_obs(self):
@@ -48,29 +48,12 @@ class UAVEnv(gym.Env):
 
         logging.info(f"Step {self.step_count + 1}: Received action: {action}")
 
-        def dynamic_step_size(base_step_size, max_distance, distances, nearby_user_density, max_step_size):
-            # Dynamic factor based on the maximum distance to any user
-            distance_factor = 1 + (distances.max() / max_distance)
-
-            # Dynamic factor based on the density of nearby users
-            density_factor = 1 + (nearby_user_density / self.num_users)
-
-            # Calculate the dynamic step size
-            step_size = base_step_size * distance_factor * density_factor
-
-            # Cap the step size to prevent it from being too large
-            step_size = min(step_size, max_step_size)
-
-            return step_size
-
-        base_step_size = 1
+        base_step_size = 0.5
         max_distance = np.sqrt((self.area_size[0] ** 2) + (self.area_size[1] ** 2))
 
         for i in range(self.num_uavs):
             distances = np.linalg.norm(self.user_positions - self.uav_positions[i], axis=1)
-            nearby_user_density = np.sum(distances < max_distance / 4)  # Count users within a quarter of max distance
-            step_size = dynamic_step_size(base_step_size, max_distance, distances, nearby_user_density, 5)
-
+            step_size = base_step_size + 0.5 * (distances.max() / max_distance)
             action_set = [
                 (0, 0),
                 (0, step_size),  # Up
