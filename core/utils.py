@@ -1,4 +1,5 @@
 import random
+import numpy as np
 import torch
 import torch.nn as nn
 import logging
@@ -39,7 +40,6 @@ def process_batch_element(batch, policy_net, device):
 
     actions = actions.unsqueeze(2)
 
-
     policy_net_output = policy_net(states)
     current_q_values = policy_net_output.gather(2, actions).squeeze(2)
 
@@ -47,6 +47,22 @@ def process_batch_element(batch, policy_net, device):
 
 
 def train_batch(policy_net, target_net, optimizer, batch, gamma, device='cpu'):
+    next_states, rewards, dones, current_q_values = process_batch_element(batch, policy_net, device)
+
+    with torch.no_grad():
+        max_next_q_values = target_net(next_states).max(2)[0]
+
+    target_q_values = rewards + (gamma * max_next_q_values * (1 - dones))
+
+    loss = nn.MSELoss()(current_q_values, target_q_values)
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    return loss.item()
+
+
+def train_double_dqn_batch(policy_net, target_net, optimizer, batch, gamma, device='cpu'):
     next_states, rewards, dones, current_q_values = process_batch_element(batch, policy_net, device)
 
     with torch.no_grad():
@@ -63,18 +79,14 @@ def train_batch(policy_net, target_net, optimizer, batch, gamma, device='cpu'):
     return loss.item()
 
 
-def train_double_dqn_batch(policy_net, target_net, optimizer, batch, gamma, device='cpu'):
-    next_states, rewards, dones, current_q_values = process_batch_element(batch, policy_net, device)
+def calculate_average_movement(uav_positions_history):
+    average_movements = []
 
-    with torch.no_grad():
-        next_state_actions = policy_net(next_states).argmax(dim=1, keepdim=True)
-        max_next_q_values = target_net(next_states).gather(1, next_state_actions).squeeze(1)
+    for episode_positions in uav_positions_history:
+        movements = []
+        for i in range(1, len(episode_positions)):
+            movement = np.linalg.norm(np.array(episode_positions[i]) - np.array(episode_positions[i - 1]), axis=1)
+            movements.append(np.mean(movement))
+        average_movements.append(np.mean(movements))
 
-    target_q_values = rewards + (gamma * max_next_q_values * (1 - dones))
-
-    loss = nn.MSELoss()(current_q_values, target_q_values)
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-
-    return loss.item()
+    return average_movements
