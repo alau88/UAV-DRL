@@ -25,12 +25,7 @@ class UAVEnv(gym.Env):
     def reset(self):
         self.step_count = 0
         self.user_positions = np.random.rand(self.num_users, 2) * self.area_size
-        self.uav_positions = np.array([
-                                          [15, 15],  # Bottom-left corner
-                                          [15, self.area_size[1]-15],  # Top-left corner
-                                          [self.area_size[0]-15, 15],  # Bottom-right corner
-                                          [self.area_size[0]-15, self.area_size[1]-15]  # Top-right corner
-                                      ][:self.num_uavs])
+        self.uav_positions = np.random.rand(self.num_uavs, 2) * self.area_size
 
         self.uav_positions = self.uav_positions.astype(np.float64)
         self.user_positions = self.user_positions.astype(np.float64)
