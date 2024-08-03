@@ -9,11 +9,9 @@ check_point_directory = None
 best_model_directory = None
 
 
-def set_current_output_directory(config):
+def set_current_output_directory(network):
     global current_output_directory, check_point_directory, best_model_directory
-    config = f"{config}"
-    config_dir_name = config.replace(' ', '').replace('(', '').replace(')', '').replace(',', '_')
-    current_output_directory = os.path.join(BASE_OUTPUT_DIRECTORY, config_dir_name)
+    current_output_directory = os.path.join(BASE_OUTPUT_DIRECTORY, network)
     if not os.path.exists(current_output_directory):
         os.makedirs(current_output_directory)
 
@@ -58,7 +56,7 @@ def save_best_model(state, file_name='best_model.pth.tar', best_overall=False):
     print(f'Best model saved to {file_path}')
 
 
-def save_plot(plt, file_name="training_evaluation_rewards.png", best_overall=False):
+def save_plot(plt, file_name, best_overall=False):
     if best_overall:
         if not os.path.exists(BEST_OVERALL_MODEL_DIRECTORY):
             os.makedirs(BEST_OVERALL_MODEL_DIRECTORY)
