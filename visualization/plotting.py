@@ -66,9 +66,31 @@ def plot_total_reward_and_moving_average(total_reward_per_episode):
     window_size = 50
     moving_avg_rewards = moving_average(total_reward_per_episode, window_size)
 
+    # Calculate the standard deviation for the shaded area
+    std_rewards = np.std(total_reward_per_episode[:len(moving_avg_rewards)])
+    lower_bound = moving_avg_rewards - std_rewards
+    upper_bound = moving_avg_rewards + std_rewards
+
+    # Padding for the moving average
     padding = (len(total_reward_per_episode) - len(moving_avg_rewards)) // 2
     moving_avg_rewards_padded = np.pad(moving_avg_rewards, (padding, padding), 'edge')
+    lower_bound_padded = np.pad(lower_bound, (padding, padding), 'edge')
+    upper_bound_padded = np.pad(upper_bound, (padding, padding), 'edge')
+
+    # Ensure all padded arrays are the same length as total_reward_per_episode
+    if len(moving_avg_rewards_padded) < len(total_reward_per_episode):
+        diff = len(total_reward_per_episode) - len(moving_avg_rewards_padded)
+        moving_avg_rewards_padded = np.pad(moving_avg_rewards_padded, (0, diff), 'edge')
+        lower_bound_padded = np.pad(lower_bound_padded, (0, diff), 'edge')
+        upper_bound_padded = np.pad(upper_bound_padded, (0, diff), 'edge')
+    else:
+        moving_avg_rewards_padded = moving_avg_rewards_padded[:len(total_reward_per_episode)]
+        lower_bound_padded = lower_bound_padded[:len(total_reward_per_episode)]
+        upper_bound_padded = upper_bound_padded[:len(total_reward_per_episode)]
+
+    # Plotting the moving average with shaded area
     ax1.plot(moving_avg_rewards_padded, color='red', label='Moving Average')
+    ax1.fill_between(range(len(total_reward_per_episode)), lower_bound_padded, upper_bound_padded, color='red', alpha=0.2)
 
     ax1.set_xlabel('Episode')
     ax1.set_ylabel('Total Reward')
