@@ -59,25 +59,22 @@ def plot_average_movement(average_movements):
 
 def plot_total_reward_and_moving_average(total_reward_per_episode):
     fig, ax1 = plt.subplots(figsize=(12, 8))
-
-    # Plotting total reward
-    ax1.plot(total_reward_per_episode, color='gray', alpha=0.5, label='Total Reward')
-
-    window_size = 50
+    window_size=10
+    # Calculate the moving average
     moving_avg_rewards = moving_average(total_reward_per_episode, window_size)
+    
+    # Calculate the rolling standard deviation for the shaded area
+    rolling_std = np.array([np.std(total_reward_per_episode[i:i + window_size]) for i in range(len(moving_avg_rewards))])
+    lower_bound = moving_avg_rewards - rolling_std
+    upper_bound = moving_avg_rewards + rolling_std
 
-    # Calculate the standard deviation for the shaded area
-    std_rewards = np.std(total_reward_per_episode[:len(moving_avg_rewards)])
-    lower_bound = moving_avg_rewards - std_rewards
-    upper_bound = moving_avg_rewards + std_rewards
-
-    # Padding for the moving average
+    # Padding for the moving average and bounds
     padding = (len(total_reward_per_episode) - len(moving_avg_rewards)) // 2
     moving_avg_rewards_padded = np.pad(moving_avg_rewards, (padding, padding), 'edge')
     lower_bound_padded = np.pad(lower_bound, (padding, padding), 'edge')
     upper_bound_padded = np.pad(upper_bound, (padding, padding), 'edge')
 
-    # Ensure all padded arrays are the same length as total_reward_per_episode
+    # Adjusting the padded arrays to match total_reward_per_episode length
     if len(moving_avg_rewards_padded) < len(total_reward_per_episode):
         diff = len(total_reward_per_episode) - len(moving_avg_rewards_padded)
         moving_avg_rewards_padded = np.pad(moving_avg_rewards_padded, (0, diff), 'edge')
@@ -88,15 +85,15 @@ def plot_total_reward_and_moving_average(total_reward_per_episode):
         lower_bound_padded = lower_bound_padded[:len(total_reward_per_episode)]
         upper_bound_padded = upper_bound_padded[:len(total_reward_per_episode)]
 
-    # Plotting the moving average with shaded area
+    # Plotting the moving average with shaded area for std dev
     ax1.plot(moving_avg_rewards_padded, color='red', label='Moving Average')
-    ax1.fill_between(range(len(total_reward_per_episode)), lower_bound_padded, upper_bound_padded, color='red', alpha=0.2)
+    ax1.fill_between(range(len(total_reward_per_episode)), lower_bound_padded, upper_bound_padded, color='red', alpha=0.3)
 
     ax1.set_xlabel('Episode')
-    ax1.set_ylabel('Total Reward')
-    ax1.set_title('Total Reward and Moving Average Over Episodes')
+    ax1.set_ylabel('Moving Average of Total Reward')
+    ax1.set_title('Moving Average of Total Reward with Std Dev Over Episodes')
     ax1.legend()
 
     plt.grid(True)
-    save_plot(plt, "Total Reward and Moving Average Over Episodes.png")
+    save_plot(plt, "Moving Average with Std Dev Over Episodes.png")
     plt.show()

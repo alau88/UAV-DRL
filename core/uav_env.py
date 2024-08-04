@@ -6,7 +6,7 @@ import logging
 
 
 class UAVEnv(gym.Env):
-    def __init__(self, num_users=20, num_uavs=3, area_size=(100, 100), max_steps=500):
+    def __init__(self, num_users=20, num_uavs=3, area_size=(100, 100), max_steps=1000):
         super(UAVEnv, self).__init__()
 
         self.uav_positions = None
