@@ -1,8 +1,11 @@
 import numpy as np
 import torch
+from evaluation.UVA_performance_metrics import UAVPerformanceMetrics, output_metrics
+from checkpoints.check_point import save_evaluation_metrics
 
 
 def evaluate_policy(env, policy_net, num_episodes=1, device='cpu'):
+    performance_metrics = []
     total_rewards = []
     all_user_positions = []
     all_uav_positions = []
@@ -11,12 +14,13 @@ def evaluate_policy(env, policy_net, num_episodes=1, device='cpu'):
     policy_net.eval()
 
     for episode in range(num_episodes):
+        performance_metrics_per_episode = UAVPerformanceMetrics()
         state = env.reset().flatten().unsqueeze(0).to(device)
         total_reward = 0
         done = False
         user_positions_history = []
         uav_positions_history = []
-        
+
         while not done:
             actions = []
             for uav in range(env.num_uavs):
@@ -38,10 +42,17 @@ def evaluate_policy(env, policy_net, num_episodes=1, device='cpu'):
             state = next_state.clone().detach()
             total_reward += reward
 
+            performance_metrics_per_episode.update(uav_positions, user_positions, total_reward)
+
         total_rewards.append(total_reward)
         all_user_positions.append(user_positions_history)
         all_uav_positions.append(uav_positions_history)
+        metrics = performance_metrics_per_episode.get_metrics()
+        performance_metrics.append(metrics)
+        output_metrics(metrics, episode)
 
+    save_evaluation_metrics(performance_metrics)
     avg_reward = np.mean(total_rewards)
     print(f'Average Reward over {num_episodes} episodes: {avg_reward}')
+
     return avg_reward, all_user_positions, all_uav_positions

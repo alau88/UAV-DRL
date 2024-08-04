@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from core.utils import select_action, train_batch
+from core.utils import select_action, train_batch, train_double_dqn_batch
 from checkpoints.check_point import save_checkpoint, save_best_model
 from evaluation.evaluate import evaluate_policy
 import logging
@@ -12,18 +12,21 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
-              start_episode=0, best_total_reward=-float('inf')):
+              start_episode=0, best_total_reward=-float('inf'), double_dqn=False):
     epsilon = config.epsilon_start
     total_reward_per_episode = []
     evaluation_rewards_per_interval = []
     best_model = None
     episode_losses = []
+    uav_positions_history = []
 
     for episode in range(start_episode, config.num_episodes):
-        total_reward, epsilon, losses = run_episode(env, policy_net, target_net, optimizer,
-                                            replay_buffer, config, epsilon)
+        total_reward, epsilon, losses, episode_uav_positions = run_episode(env, policy_net, target_net,
+                                                                           optimizer, replay_buffer, config,
+                                                                           epsilon, double_dqn)
         total_reward_per_episode.append(total_reward)
         episode_losses.append(np.mean(losses))
+        uav_positions_history.append(episode_uav_positions)
 
         if episode > 0 and episode % config.target_update == 0:
             update_target_net(policy_net, target_net)
@@ -44,14 +47,17 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
             eval_reward, _, _ = evaluate_policy(env, target_net, num_episodes=10, device=device)
             evaluation_rewards_per_interval.append(eval_reward)
 
-    return total_reward_per_episode, evaluation_rewards_per_interval, best_model, episode_losses
+    return (total_reward_per_episode, evaluation_rewards_per_interval, best_model, episode_losses,
+            uav_positions_history)
 
 
-def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, epsilon):
+def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, epsilon, double_dqn=False):
     state = env.reset().to(device)
     total_reward = 0
     done = False
     episode_losses = []
+
+    episode_uav_positions = [env.uav_positions.copy()]
 
     while not done:
         action = select_action(state, policy_net, epsilon, env.action_space, env.num_uavs, device)
@@ -60,17 +66,21 @@ def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, e
 
         total_reward += reward
 
+        episode_uav_positions.append(env.uav_positions.copy())
         replay_buffer.add(state, action, reward, next_state, done)
         state = next_state
 
         if len(replay_buffer) > config.batch_size:
             batch = replay_buffer.sample(config.batch_size)
-            loss = train_batch(policy_net, target_net, optimizer, batch, config.gamma, device)
+            if double_dqn:
+                loss = train_double_dqn_batch(policy_net, target_net, optimizer, batch, config.gamma, device)
+            else:
+                loss = train_batch(policy_net, target_net, optimizer, batch, config.gamma, device)
             episode_losses.append(loss) 
 
         epsilon = max(config.epsilon_end, config.epsilon_decay * epsilon)
 
-    return total_reward, epsilon, episode_losses
+    return total_reward, epsilon, episode_losses, episode_uav_positions
 
 
 def update_target_net(policy_net, target_net):

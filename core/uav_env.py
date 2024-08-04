@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import logging
 
+
 class UAVEnv(gym.Env):
     def __init__(self, num_users=20, num_uavs=3, area_size=(100, 100), max_steps=500):
         super(UAVEnv, self).__init__()
@@ -18,7 +19,8 @@ class UAVEnv(gym.Env):
         self.move_distance = 1.0
         
         self.action_space = spaces.Discrete(5)
-        self.observation_space = spaces.Box(low=0, high=max(area_size), shape=(num_users + num_uavs, 2), dtype=np.float32)
+        self.observation_space = spaces.Box(low=0, high=max(area_size), shape=(num_users + num_uavs, 2),
+                                            dtype=np.float32)
 
         self.reset()
 
@@ -39,6 +41,8 @@ class UAVEnv(gym.Env):
         
         self.uav_positions = np.random.rand(self.num_uavs, 2) * self.area_size if self.uav_positions is None else self.uav_positions
         self.uav_positions = self.uav_positions.astype(np.float64)
+        self.user_positions = self.user_positions.astype(np.float64)
+
         self.uav_positions_history = [self.uav_positions.copy()]
         
         return self._get_obs()
