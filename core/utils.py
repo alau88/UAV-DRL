@@ -32,7 +32,7 @@ def process_batch_element(batch, policy_net, device):
     states = torch.stack([s.view(-1) for s in states]).to(device)
     next_states = torch.stack([ns.view(-1) for ns in next_states]).to(device)
 
-    actions = torch.stack([torch.tensor(a, dtype=torch.long) for a in actions]).to(device)
+    actions = torch.stack([torch.tensor(a, dtype=torch.long) if not isinstance(a, torch.Tensor) else a.to(torch.long) for a in actions]).to(device)
     batch_size, num_uavs = actions.shape
 
     rewards = rewards.unsqueeze(1).expand(batch_size, num_uavs)
