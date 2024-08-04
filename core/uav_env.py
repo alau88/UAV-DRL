@@ -16,7 +16,7 @@ class UAVEnv(gym.Env):
         self.area_size = area_size
         self.max_steps = max_steps
         self.step_count = 0
-        self.move_distance = 1.0
+        self.move_distance = 0.5
         
         self.action_space = spaces.Discrete(5)
         self.observation_space = spaces.Box(low=0, high=max(area_size), shape=(num_users + num_uavs, 2),
@@ -56,7 +56,7 @@ class UAVEnv(gym.Env):
 
         logging.info(f"Step {self.step_count + 1}: Received action: {action}")
 
-        base_step_size = 0.5
+        base_step_size = 2.5
         max_distance = np.sqrt((self.area_size[0] ** 2) + (self.area_size[1] ** 2))
 
         for i in range(self.num_uavs):
@@ -110,9 +110,8 @@ class UAVEnv(gym.Env):
         
         # Determine the minimum distance for each user (distance to the closest UAV)
         min_distances = np.min(distances, axis=1)
-        
         # Compute the sum of these minimum distances
-        total_min_distance = np.sum(min_distances)
+        total_min_distance = np.mean(min_distances)
     
         # Penalize based on the total minimum distance; less negative for smaller total distances
         penalty = -total_min_distance

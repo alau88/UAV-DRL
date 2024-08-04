@@ -31,19 +31,19 @@ def plot_evaluation(avg_losses_per_episode, total_reward_per_episode,
     plot_total_reward_and_moving_average(total_reward_per_episode)
 
 
-def evaluate_config(config, network):
+def evaluate_config(config):
     double_dqn = False
-    env = UAVEnv(num_users=10, num_uavs=3, area_size=(100, 100))
+    env = UAVEnv(num_users=20, num_uavs=3, area_size=(100, 100))
     state_size = env.observation_space.shape[0] * env.observation_space.shape[1]
     action_size = env.action_space.n
 
-    if network == "DQN":
+    if config.network == "DQN":
         policy_net = DQN(state_size, env.num_uavs, action_size).to(device)
         target_net = DQN(state_size, env.num_uavs, action_size).to(device)
-    elif network == "DuelingDQN":
+    elif config.network == "DuelingDQN":
         policy_net = DuelingDQN(state_size, env.num_uavs, action_size).to(device)
         target_net = DuelingDQN(state_size, env.num_uavs, action_size).to(device)
-    elif network == "DoubleDQN":
+    elif config.network == "DoubleDQN":
         double_dqn = True
         policy_net = DQN(state_size, env.num_uavs, action_size).to(device)
         target_net = DQN(state_size, env.num_uavs, action_size).to(device)
