@@ -3,6 +3,7 @@ from gymnasium import spaces
 import numpy as np
 import torch
 import logging
+from sklearn.cluster import KMeans
 
 
 class UAVEnv(gym.Env):
@@ -105,20 +106,19 @@ class UAVEnv(gym.Env):
                     self.user_positions[i, dim] = np.clip(self.user_positions[i, dim], 0, self.area_size[dim])
 
     def _compute_reward(self):
-        # Compute distances between each user and each UAV
-        distances = np.linalg.norm(self.user_positions[:, np.newaxis] - self.uav_positions, axis=2)
+        # Cluster users and get centroids
+        kmeans = KMeans(n_clusters=self.num_uavs)
+        kmeans.fit(self.user_positions)
+        centroids = kmeans.cluster_centers_
         
-        # Determine the minimum distance for each user (distance to the closest UAV)
-        min_distances = np.min(distances, axis=1)
-        # Compute the sum of these minimum distances
-        total_min_distance = np.mean(min_distances)
-    
-        # Penalize based on the total minimum distance; less negative for smaller total distances
-        penalty = -total_min_distance
-        # Find the maximum of these minimum distances (max-min distance)
-        #max_min_distance = np.max(min_distances)
+        # Compute the distance from each UAV to the closest centroid
+        distances_to_centroids = np.linalg.norm(self.uav_positions[:, np.newaxis] - centroids, axis=2)
+        min_distances_to_centroids = np.min(distances_to_centroids, axis=1)
         
-        # Penalize based on the max-min distance; less negative for smaller distances
-        #penalty = -max_min_distance
+        # Sum of the minimum distances to centroids
+        total_min_distance_to_centroids = np.mean(min_distances_to_centroids)
+        
+        # Penalize based on the total minimum distance to centroids
+        penalty = -total_min_distance_to_centroids
         
         return penalty
