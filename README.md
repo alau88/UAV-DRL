@@ -11,3 +11,6 @@ Set up the environment using [pip](https://pip.pypa.io/en/stable/).
 pip install -r requirements.txt
 ```
 
+Install [ffmpeg](https://www.ffmpeg.org/download.html) for video generation in `animate.py`.
+
+Remember to set path to `/ffmpeg/bin`. 
