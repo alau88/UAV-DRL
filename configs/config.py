@@ -1,6 +1,7 @@
 class Config:
     def __init__(self,
-                 num_episodes=500,
+                 network,
+                 num_episodes=250,
                  batch_size=64,
                  gamma=0.99,
                  epsilon_start=1.0,
@@ -11,7 +12,7 @@ class Config:
                  replay_buffer_capacity=10000,
                  learning_rate=0.001,
                  evaluation_interval=50):
-
+        self.network = network
         self.num_episodes = num_episodes
         self.batch_size = batch_size
         self.gamma = gamma
@@ -30,6 +31,7 @@ class Config:
 
     def to_dict(self):
         return {
+            "network": self.network,
             "num_episodes": self.num_episodes,
             "batch_size": self.batch_size,
             "gamma": self.gamma,
