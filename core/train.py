@@ -1,7 +1,7 @@
 import time
 import torch
 import numpy as np
-from core.utils import select_action, train_batch, train_double_dqn_batch
+from core.utils import select_action, train_batch, train_double_dqn_batch, compute_td_error
 from checkpoints.check_point import save_checkpoint, save_best_model
 from evaluation.evaluate import evaluate_policy
 import logging
@@ -76,10 +76,13 @@ def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, e
 
         episode_uav_positions.append(env.uav_positions.copy())
         replay_buffer.add(state, action, reward, next_state, done)
+
         state = next_state
 
         if len(replay_buffer) > config.batch_size:
-            batch = replay_buffer.sample(config.batch_size)
+            batch, indices, weights = replay_buffer.sample(config.batch_size)
+            td_errors = compute_td_error(policy_net, target_net, batch, config.gamma, device)
+            replay_buffer.update_priorities(indices, td_errors)
             if double_dqn:
                 loss = train_double_dqn_batch(policy_net, target_net, optimizer, batch, config.gamma, device)
             else:

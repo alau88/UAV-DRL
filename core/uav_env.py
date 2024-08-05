@@ -98,35 +98,14 @@ class UAVEnv(gym.Env):
                     self.user_velocities[i] = np.array([np.cos(angles), np.sin(angles)]) * self.move_distance
                     self.user_positions[i, dim] = np.clip(self.user_positions[i, dim], 0, self.area_size[dim])
 
-    def _compute_reward(self):
-        # Cluster users and get centroids
-        kmeans = KMeans(n_clusters=self.num_uavs)
-        kmeans.fit(self.user_positions)
-        centroids = kmeans.cluster_centers_
-        
-        # Compute the distance from each UAV to the closest centroid
-        distances_to_centroids = np.linalg.norm(self.uav_positions[:, np.newaxis] - centroids, axis=2)
-        min_distances_to_centroids = np.min(distances_to_centroids, axis=1)
-        
-        # Mean of the minimum distances to centroids
-        total_min_distance_to_centroids = np.mean(min_distances_to_centroids)
-        
-        # Base penalty for total minimum distance
-        penalty = -total_min_distance_to_centroids
+    def _compute_reward(self, coverage_threshold=5):
+        distances = np.linalg.norm(self.user_positions[:, np.newaxis] - self.uav_positions, axis=2)
+        min_distances = np.min(distances, axis=1)
+        max_possible_distance = np.sqrt((self.area_size[0] ** 2) + (self.area_size[1] ** 2))
 
-        # Additional penalty for UAVs staying still
-        no_move_penalty = 0
-        for i in range(self.num_uavs):
-            if np.array_equal(self.uav_positions[i], self.previous_uav_positions[i]):
-                self.stationary_counts[i] += 1
-                no_move_penalty -= self.stationary_counts[i] * 5  # Ramping penalty, adjust factor as needed
-            else:
-                self.stationary_counts[i] = 0
-        
-        # Update previous positions for the next step
-        self.previous_uav_positions = np.copy(self.uav_positions)
-        
-        # Combine penalties
-        penalty += no_move_penalty
-        
-        return penalty
+        distance_reward = -np.sum(min_distances) / (max_possible_distance * self.num_users)
+        close_reward = np.sum(min_distances < coverage_threshold)
+
+        total_reward = distance_reward
+
+        return total_reward

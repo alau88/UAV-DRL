@@ -2,7 +2,7 @@ import itertools
 import numpy as np
 import torch
 from core.dqn import DQN, DuelingDQN
-from core.replay_buffer import ReplayBuffer
+from core.replay_buffer import PrioritizedMultiStepReplayBuffer
 from core.uav_env import UAVEnv
 from core.train import train_dqn
 from core.utils import calculate_average_movement
@@ -53,7 +53,9 @@ def evaluate_config(config):
 
     target_net.load_state_dict(policy_net.state_dict())
     optimizer = torch.optim.Adam(policy_net.parameters(), lr=config.learning_rate)
-    replay_buffer = ReplayBuffer(config.replay_buffer_capacity)
+
+    # replay_buffer = ReplayBuffer(config.replay_buffer_capacity)
+    replay_buffer = PrioritizedMultiStepReplayBuffer(config.replay_buffer_capacity, 3)
 
     (total_reward_per_episode, eval_reward_per_interval,
      best_model, avg_losses_per_episode, uav_positions_history,

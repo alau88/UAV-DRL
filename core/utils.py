@@ -25,14 +25,17 @@ def select_action(state, policy_net, epsilon, action_space, num_uavs, device='cp
 
 
 def process_batch_element(batch, policy_net, device):
-    states, actions, rewards, next_states, dones = zip(*batch)
+    states, actions, rewards, next_states, dones = batch
     rewards = torch.tensor(rewards, dtype=torch.float32).to(device)
     dones = torch.tensor(dones, dtype=torch.float32).to(device)
 
     states = torch.stack([s.view(-1) for s in states]).to(device)
     next_states = torch.stack([ns.view(-1) for ns in next_states]).to(device)
 
-    actions = torch.stack([torch.tensor(a, dtype=torch.long) if not isinstance(a, torch.Tensor) else a.to(torch.long) for a in actions]).to(device)
+    actions = torch.stack(
+        [torch.tensor(a, dtype=torch.long) if not isinstance(a, torch.Tensor) else a.to(torch.long) for a in
+         actions]).to(device)
+
     batch_size, num_uavs = actions.shape
 
     rewards = rewards.unsqueeze(1).expand(batch_size, num_uavs)
@@ -90,3 +93,16 @@ def calculate_average_movement(uav_positions_history):
         average_movements.append(np.mean(movements))
 
     return average_movements
+
+
+def compute_td_error(policy_net, target_net, batch, gamma, device='cpu'):
+    next_states, rewards, dones, current_q_values = process_batch_element(batch, policy_net, device)
+
+    with torch.no_grad():
+        max_next_q_values = target_net(next_states).max(2)[0]
+
+    expected_q_values = rewards + (gamma * max_next_q_values * (1 - dones))
+
+    td_error = abs(current_q_values - expected_q_values)
+
+    return td_error
