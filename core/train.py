@@ -19,13 +19,18 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
     best_model = None
     episode_losses = []
     uav_positions_history = []
+    epsilon_values = []
+    training_times = []
 
     for episode in range(start_episode, config.num_episodes):
+        start_time = time.time()
+
         total_reward, epsilon, losses, episode_uav_positions = run_episode(env, policy_net, target_net,
                                                                            optimizer, replay_buffer, config,
                                                                            epsilon, double_dqn)
         total_reward_per_episode.append(total_reward)
         episode_losses.append(np.mean(losses))
+        epsilon_values.append(epsilon)
         uav_positions_history.append(episode_uav_positions)
 
         if episode > 0 and episode % config.target_update == 0:
@@ -34,6 +39,8 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
         if episode > 0 and episode % config.checkpoint_interval == 0:
             save_checkpoint_at_interval(episode, policy_net, target_net,
                                         optimizer, epsilon, best_total_reward)
+        end_time = time.time()
+        training_times.append(end_time - start_time)
 
         if total_reward > best_total_reward:
             update_target_net(policy_net, target_net)
@@ -48,7 +55,7 @@ def train_dqn(env, policy_net, target_net, optimizer, replay_buffer, config,
             evaluation_rewards_per_interval.append(eval_reward)
 
     return (total_reward_per_episode, evaluation_rewards_per_interval, best_model, episode_losses,
-            uav_positions_history)
+            uav_positions_history, epsilon_values, training_times)
 
 
 def run_episode(env, policy_net, target_net, optimizer, replay_buffer, config, epsilon, double_dqn=False):
