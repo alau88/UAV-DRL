@@ -1,7 +1,7 @@
 class Config:
     def __init__(self,
-                 network,
-                 num_episodes=300,
+                 network="DQN",
+                 num_episodes=51,
                  batch_size=64,
                  gamma=0.99,
                  epsilon_start=1.0,
@@ -9,8 +9,8 @@ class Config:
                  epsilon_decay=0.995,
                  target_update=10,
                  checkpoint_interval=50,
-                 replay_buffer_capacity=10000,
-                 learning_rate=0.001,
+                 replay_buffer_capacity=5000,
+                 learning_rate=0.0001,
                  evaluation_interval=50):
         self.network = network
         self.num_episodes = num_episodes
