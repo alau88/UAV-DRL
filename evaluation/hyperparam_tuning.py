@@ -8,9 +8,10 @@ from core.train import train_dqn
 from core.utils import calculate_average_movement
 from configs.config import Config
 from configs.hyperparams_grid import param_grid
-from checkpoints.check_point import save_best_model, set_current_output_directory
+from checkpoints.check_point import save_best_model, set_current_output_directory, save_train_metrics
 from visualization.plotting import (plot_training_evaluation_rewards, plot_training_losses, plot_average_movement,
                                     plot_total_reward_and_moving_average)
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -55,9 +56,12 @@ def evaluate_config(config):
     replay_buffer = ReplayBuffer(config.replay_buffer_capacity)
 
     (total_reward_per_episode, eval_reward_per_interval,
-     best_model, avg_losses_per_episode, uav_positions_history) = train_dqn(env, policy_net, target_net,
-                                                                            optimizer,  replay_buffer, config,
-                                                                            double_dqn=double_dqn)
+     best_model, avg_losses_per_episode, uav_positions_history,
+     epsilon_values, training_time) = train_dqn(env, policy_net, target_net,
+                                                optimizer,  replay_buffer, config,
+                                                double_dqn=double_dqn)
+
+    save_train_metrics(total_reward_per_episode, avg_losses_per_episode, epsilon_values, training_time)
 
     mean_reward = np.mean(total_reward_per_episode[-100:])
 
@@ -83,7 +87,7 @@ def run_grid_search(network):
 
         config = Config(**params_dict)
         (mean_reward, best_model, total_reward_per_episode,
-         eval_reward_per_interval) = evaluate_config(config, network)
+         eval_reward_per_interval) = evaluate_config(config)
 
     #     if mean_reward > best_reward:
     #         best_reward = mean_reward

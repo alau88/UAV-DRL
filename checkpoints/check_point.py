@@ -78,3 +78,17 @@ def save_plot(plt, file_name, best_overall=False):
 
     plt_file_path = return_path(current_output_directory, file_name)
     plt.savefig(plt_file_path)
+
+
+def save_train_metrics(total_reward_per_episode, avg_losses_per_episode,
+                       epsilon_values, training_time, file_name='training_metrics.csv'):
+
+    train_metrics = {
+        'Total Reward': total_reward_per_episode,
+        'Epsilon': epsilon_values,
+        'Average Loss': avg_losses_per_episode,
+        'Training Time': training_time
+    }
+    df_metrics = pd.DataFrame(train_metrics)
+    csv_file_path = return_path(current_output_directory, file_name)
+    df_metrics.to_csv(csv_file_path, index=False)
